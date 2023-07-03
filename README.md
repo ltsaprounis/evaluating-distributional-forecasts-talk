@@ -1,4 +1,4 @@
-# evaluate-distributional-forecasts-talk
+# evaluating-distributional-forecasts-talk
 My code and slides for the 75th PyData London meet-up presentation on "Evaluating Distributional Forecasts"  
 <img src="https://github.com/ltsaprounis/evaluate-distributional-forecats-talk/assets/64217214/02354b3e-d53d-4106-9613-813faf86a49d" width="600">
 
