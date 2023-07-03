@@ -1,0 +1,10 @@
+scipy==1.9.0
+aeon
+statsmodels
+pandas<2
+numpy
+matplotlib
+jupyter
+ipykernel
+tqdm
+
