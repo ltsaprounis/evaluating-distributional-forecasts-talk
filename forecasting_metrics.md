@@ -121,7 +121,36 @@ Where (for all metrics above):
 For a more extensive summary table and detailed analysis of the properties of each metric have a look at [[2]](#ref-2).
 
 ## Metrics for multiple time-series
-TODO: Fill in this section
+When we need to take decisions on a single time series (e.g. model selection) whether the
+metric is scale dependent or not is not a factor. However, if we're aggregating the raw
+errors or the metrics of multiple time series, then we need to consider the units and the scale.
+
+Aggregated metrics are important for tracking the overall performance of our forecasting
+system. Decisions are usually taken based on individual time series, but for commercial applications it's important that time series are weighted based on their
+importance. Usually importance means value.
+
+There are 2 ways to create scores for the performance of multiple time series: 
+1. Compute single time series metrics (RMSE, MAE, WAPE etc.) and then aggregate them using
+weights.
+2. Compute metrics based on the raw errors of the time (series) and scale / weigh them
+after.
+
+For the purposes of auditing performance and taking deliberate decisions on how to weigh
+different time series, it's always better to go with the former approach.
+
+> In most cases, weights can be constructed in a way where these 2 methods are mathematically
+> equivalent. For example, WAPE computed across all time series can be decomposed as:
+> 
+> $$
+> \text{WAPE}_{\text{total}} = \frac{\sum_{i=1}^{N} \sum_{t=1}^{T} |y_{ti} - \hat{y}_{ti}|}{\sum_{i=1}^{N} \sum_{t=1}^{T} |y_{ti}|} = \sum_{i=1}^{N} w_i \cdot \text{WAPE}_i = \frac{T}{\sum_{i=1}^{N} \sum_{t=1}^{T} |y_{ti}|} \sum_{i=1}^{N} \text{MAE}_i
+> $$
+> 
+> Where $\text{WAPE}_i = \frac{\sum_{t=1}^{T} |y_{ti} - \hat{y}_{ti}|}{\sum_{t=1}^{T} |y_{ti}|}$ is the WAPE of series $i$,
+> $w_i = \frac{\sum_{t=1}^{T} |y_{ti}|}{\sum_{k=1}^{N} \sum_{t=1}^{T} |y_{tk}|}$ is the weight for series $i$ (its share of total absolute actuals),
+> and $\text{MAE}_i = \frac{1}{T} \sum_{t=1}^{T} |y_{ti} - \hat{y}_{ti}|$ is the standard MAE of series $i$.
+> In other words, high-value series naturally dominate the aggregate WAPE — which is often
+> desirable but should be a **deliberate** choice.
+
 
 ## Forecast Stability
 
