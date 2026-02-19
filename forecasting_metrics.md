@@ -1,14 +1,5 @@
 # Forecast performance metrics ADR
 
-## TODOs [will delete this section after doc is complete]
-
-- [ ] Metrics aggregation
-- [ ] Dimensions to evaluate the forecast across
-- [ ] Fix References and add more resources
-- [X] Appendix with presentation 
-- [ ] Extrinsic metrics (matching status quo and decisions made)
-- [ ] Status quo summary from Alex's doc
-
 ## Introduction
 
 When designing a forecasting system, the metrics we use for the overall performance
@@ -18,7 +9,7 @@ than the models we choose.
 If we have a proper cross-validation setup, free of any leakage risk, and metrics that are
 aligned to the types of decisions we will take using our forecasts, then we will choose
 the right models for our use-case. Conversely, if our forecast metrics and/or our cross-
-validation setup doesn't match reality and the types of decisions we'll take then, no
+validation setup don't match reality and the types of decisions we'll take, then no
 matter how great our models are, we're optimizing for the wrong thing.
 
 Forecast metrics are geared towards a **statistical functional** (e.g. mean, median), more formally:
@@ -30,11 +21,11 @@ Forecast metrics are geared towards a **statistical functional** (e.g. mean, med
 > it is critical that the scoring function be consistent for
 > it, in the sense that the expected score is minimized when following the directive. [[1]](#ref-1)
 
-The diagram below shows all the stages in a forecasting system where a metric choice is involved — from the loss function a model optimises during training, through model selection and system monitoring, to the business decisions the forecasts inform. These don't all have to use the same metric, but they should be aligned.
+The diagram below shows all the stages in a forecasting system where a metric choice is involved — from the loss function a model optimizes during training, through model selection and system monitoring, to the business decisions the forecasts inform. These don't all have to use the same metric, but they should be aligned.
 
 ```mermaid
 flowchart LR
-    A["Model Cost Function<br/>e.g. MSE<br/><br/>What the model internally<br/>optimises during training"] 
+    A["Model Cost Function<br/>e.g. MSE<br/><br/>What the model internally<br/>optimizes during training"] 
     --> B["Metric for Model Selection<br/>e.g. RMSE<br/><br/>Used during cross-validation<br/>to compare candidate models"]
     --> C["Metric for System Evaluation<br/>e.g. WAPE, Bias %<br/><br/>Monitors overall forecasting<br/>system performance"]
     --> D["Decisions<br/><br/>Business actions taken<br/>based on the forecast"]
@@ -44,8 +35,7 @@ closer to the decision levels (e.g. out-of-stock rate, lost sales etc.). Frequen
 require simulations from probabilistic forecasts. We call these metrics extrinsic, while
 metrics like RMSE, MAE and MAPE are intrinsic.
 
-Examples of problems with the correct statistical functional / metric pairs based on the
-decisions that the forecast will inform:
+Examples of matching the correct statistical functional / metric pair to the decision:
 | Problem | Forecast Output | Metric |
 |---|---|---|
 | I want at least 99% probability that every patient in need gets a hospital bed | 99% Quantile | Quantile Loss |
@@ -55,12 +45,12 @@ decisions that the forecast will inform:
 
 ## Baselines
 
-For metrics to be useful we need to be able to see the relative performance of our system compared
-to something else. Therefore, a proper forecasting evaluation setup, always comes with 
+For metrics to be useful, we need to be able to see the relative performance of our system compared
+to something else. Therefore, a proper forecasting evaluation setup always comes with 
 a set of reasonable **baselines**. Common baselines are:
 * **Automatic forecasting algorithms:** auto.arima, ETS, Theta and simple combinations of them
 * **Arithmetic Baselines:** Historical Average, Simple Moving Average, Seasonal Naive, Naive
-* **Past forecasts of current forecasting system:** Previous judgemental forecasts
+* **Past forecasts of current forecasting system:** Previous judgmental forecasts
 
 Baselines should be used both in offline evaluation with cross-validation and live monitoring.
 
@@ -104,39 +94,39 @@ Where (for all metrics above):
 - $y_i$ — the actual value at time $i$
 - $\hat{y}_i$ — the forecast value at time $i$
 
-**Scale dependence:** A metric is scale-dependent if its value depends on the units and magnitude of the data. For example, an MAE of 100 means very different things for a series measured in thousands vs. one measured in single digits. Scale-dependent metrics (MAE, RMSE) cannot be compared across series with different scales. Scale-independent metrics (MAPE, WAPE, Bias Percentage) normalise by the actuals, making them comparable across series — but at the cost of other trade-offs (e.g., undefined at zero, asymmetric penalties). At a minimum, metrics in different units of measurement (e.g. number of apples and number of oranges, British pounds and Swiss francs) should not be aggregated together.
+**Scale dependence:** A metric is scale-dependent if its value depends on the units and magnitude of the data. For example, an MAE of 100 means very different things for a series measured in thousands vs. one measured in single digits. Scale-dependent metrics (MAE, RMSE) cannot be compared across series with different scales. Scale-independent metrics (MAPE, WAPE, Bias Percentage) normalize by the actuals, making them comparable across series — but at the cost of other trade-offs (e.g., undefined at zero, asymmetric penalties). At a minimum, metrics in different units of measurement (e.g. number of apples and number of oranges, British pounds and Swiss francs) should not be aggregated together.
 
 ### Summary Table
 
-| Metric | Scale-Dependent | Optimised by | Comments |
+| Metric | Scale-Dependent | Optimized by | Comments |
 |---|---|---|---|
 | MAE | Yes | Median |  |
-| RMSE | Yes | Mean | aligned with cost function of most models |
-| MAPE | No | 🤷 see [[1]](#ref-1) for more details| Penalises over-forecasts less than under-forecasts; undefined when $y_i = 0$ |
+| RMSE | Yes | Mean | Aligned with cost function of most models |
+| MAPE | No | 🤷 see [[1]](#ref-1) for more details| Penalizes over-forecasts less than under-forecasts; undefined when $y_i = 0$ |
 | WAPE | No | Median | |
 | Bias Percentage | No | Mean | Signed metric; positive = under-forecast, negative = over-forecast |
 
 ---
 
-For a more extensive summary table and detailed analysis of the properties of each metric have a look at [[2]](#ref-2).
+For a more extensive summary table and detailed analysis of the properties of each metric, have a look at [[2]](#ref-2).
 
-## Metrics for multiple time-series
-When we need to take decisions on a single time series (e.g. model selection) whether the
-metric is scale dependent or not is not a factor. However, if we're aggregating the raw
+## Metrics for multiple time series
+When we need to take decisions on a single time series (e.g. model selection), whether the
+metric is scale-dependent or not is not a factor. However, if we're aggregating the raw
 errors or the metrics of multiple time series, then we need to consider the units and the scale.
 
 Aggregated metrics are important for tracking the overall performance of our forecasting
 system. Decisions are usually taken based on individual time series, but for commercial applications it's important that time series are weighted based on their
-importance. Usually importance means value.
+importance, which usually means monetary value.
 
-There are 2 ways to create scores for the performance of multiple time series: 
+There are two ways to create scores for the performance of multiple time series: 
 1. Compute single time series metrics (RMSE, MAE, WAPE etc.) and then aggregate them using
 weights.
-2. Compute metrics based on the raw errors of the time (series) and scale / weigh them
-after.
+2. Compute metrics based on the raw errors of the time series and scale / weight them
+afterwards.
 
-For the purposes of auditing performance and taking deliberate decisions on how to weigh
-different time series, it's always better to go with the former approach.
+For the purposes of auditing performance and taking deliberate decisions on how to weight
+different time series, it's generally preferable to go with the former approach.
 
 > In most cases, weights can be constructed in a way where these 2 methods are mathematically
 > equivalent. For example, WAPE computed across all time series can be decomposed as:
@@ -151,26 +141,35 @@ different time series, it's always better to go with the former approach.
 > In other words, high-value series naturally dominate the aggregate WAPE — which is often
 > desirable but should be a **deliberate** choice.
 
+## Current evaluation metrics
 
-## Forecast Stability
+TODO: based on Alex's document and discussions with BUs etc.
 
-Compared to a judgemental forecast, a simple forecasting system can exhibit high changes
+## Agreed Forecasting metrics
+
+TODO: metrics for model selection, extrinsic / intrinsic metrics, stability and
+aggregation; dimensions to evaluate performance across and hierarchical levels.
+
+## Appendix - Forecast Stability
+
+Compared to a judgmental forecast, a simple forecasting system can exhibit large changes
 month-over-month for forecasts of the same target period. There are practical reasons why
 this can be a problem:
-* Any judgemental adjustments on top of the algorithmic forecast will have to be revisited
+* Any judgmental adjustments on top of the algorithmic forecast will have to be revisited
 * Downstream decisions will have to be revisited too (e.g. production schedule of a factory)
 
-As a result, modern forecasting best practices suggest that while optimising for accuracy
+As a result, modern forecasting best practices suggest that while optimizing for accuracy,
 we also need to monitor forecast stability.
 
 As a first step, we need to monitor a forecast stability metric.
 
-TODO: Add picture of stable VS non-stable forecast
+![Forecast stability: SMA vs Naive](./images/stability_sma_vs_naive.png)
 
 There are a few stability metrics that have been recently introduced. [[3]](#ref-3) offers a good 
 analysis and comparison. Of these, sMAPC(V) —
 symmetric Mean Absolute Percentage Change (Vertical) [[3]](#ref-3) is a very good compromise between
-statistical properties and interpretability for non-technical stakeholders.
+statistical properties and interpretability for non-technical stakeholders. [[4]](#ref-4) also
+provides evidence that model choice itself can affect forecast stability.
 
 $$
 \text{sMAPC(V)}
@@ -192,7 +191,7 @@ Where:
 - $\hat{y}_{t+i \mid t-1}$ — the forecast made at origin $t-1$ for the same target period $t + i$
 
 **Intuition:** For each target period $t + i$, the metric compares the two forecasts
-produced from adjacent forecast origins that share the same target. The symmetric percentage form ensures the measure is scale-independent similar to symmetric MAPE.
+produced from adjacent forecast origins that share the same target. The symmetric percentage form ensures the measure is scale-independent, similar to symmetric MAPE.
 
 ### Aggregation across multiple forecast origins
 
@@ -223,11 +222,11 @@ Where $\text{sMAPC(V)}_t$ is the metric for the vintage pair $(t, t-1)$.
 ![Normal metric curves](./images/cell20_normal_metrics_comparison.png)
 
 
-### References
+## References
 <a id="ref-1"></a>[1] Tilmann Gneiting (2011). Making and Evaluating Point Forecasts. *Journal of the American Statistical Association*, 106(494), 746–762. https://arxiv.org/abs/0912.0902
 
 <a id="ref-2"></a>[2] Hansika Hewamalage, Klaus Ackermann, & Christoph Bergmeir (2023). Forecast evaluation for data scientists: common pitfalls and best practices. *Data Mining and Knowledge Discovery*, 37, 788–832. https://doi.org/10.1007/s10618-022-00894-5
 
 <a id="ref-3"></a>[3] Rakshitha Godahewa, Christoph Bergmeir, Zeynep Erkin Baz, Chengjun Zhu, Zhangdi Song, Salvador García, & Dario Benavides (2025). On forecast stability. *International Journal of Forecasting*, 41(4), 1539–1558. https://doi.org/10.1016/j.ijforecast.2025.01.006
 
-<a id="ref-4"></a>[4] TODO Dutch guy's paper
+<a id="ref-4"></a>[4] Jente Van Belle, Ruben Crevits, & Wouter Verbeke (2023). Improving forecast stability using deep learning. *International Journal of Forecasting*, 39(3), 1333–1350. https://doi.org/10.1016/j.ijforecast.2022.06.007
